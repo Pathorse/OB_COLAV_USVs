@@ -33,7 +33,10 @@ def plot_usv_contour(ax, x_trj, width=20, height=10, tip_height=30,  *args, **kw
     # Plot contour for all steps
     for n in range(x_trj.shape[0]):
         # Create USV shape
-        shape = mpl.patches.Polygon([(-w/2,-h/2), (-w/2, h/2), (w/2, h/2), (l/2,0), (w/2, -h/2)], fill=False)
+        if (n == 0) or (n == x_trj.shape[0] - 1): # Different color for start/finish and other points
+            shape = mpl.patches.Polygon([(-w/2,-h/2), (-w/2, h/2), (w/2, h/2), (l/2,0), (w/2, -h/2)], color='red', fill=False)
+        else:
+            shape = mpl.patches.Polygon([(-w/2,-h/2), (-w/2, h/2), (w/2, h/2), (l/2,0), (w/2, -h/2)], fill=False)
 
         # Transform applied at each step
         t = mpl.transforms.Affine2D().rotate_deg_around(0, 0,

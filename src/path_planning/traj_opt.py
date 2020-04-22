@@ -9,14 +9,14 @@ from pydrake.all import (Variable, SymbolicVectorSystem, DiagramBuilder,
 
 
 
-def add_decision_variables(prog, n_x, n_u, n_po, time_steps):
+def add_decision_variables(prog, n_x, n_u, n_binary, time_steps):
 
     # Optimization variables
     x = prog.NewContinuousVariables(rows=time_steps+1, cols=n_x, name='x')
     u = prog.NewContinuousVariables(rows=time_steps, cols=n_u, name='u')
 
     # Binary variable
-    delta = prog.NewContinuousVariables(rows=time_steps + 1, cols=n_po, name='delta')
+    delta = prog.NewContinuousVariables(rows=time_steps + 1, cols=n_binary, name='delta')
 
     return x, u, delta
 
@@ -100,6 +100,35 @@ def set_polygon_obstacles(prog, obstacles, decision_variables, start, goal, time
             )
 
 
+def set_safe_regions(prog, env, decision_variables, start, goal, time_steps):
+
+    # Unpack state, input and binary
+    x, u, delta = decision_variables[:3]
+
+    # big-M vector
+    M = get_big_M(start, goal)
+
+    # Number of safe_regions
+    n_sr = len(env.safe_regions)
+
+    # Enforce polygon constraints Ax >= b
+    for t in range(time_steps) :
+        for n in range(n_sr):
+            A, b, v = env.safe_regions[n]
+
+            A = np.array(A)
+            b = np.array(b)
+
+            n_sides = len(b)
+
+            M_n = np.array(M * n_sides)
+
+            prog.AddLinearConstraint(
+                le(A.dot(x[t,:2]), b + (1 - delta[t, n])*M_n)
+            )
+
+
+
 def set_binary(prog, decision_variables, time_steps):
 
     # Unpack state, input and binary
@@ -126,7 +155,7 @@ def get_big_M(start, goal):
 
     p = goal - start
 
-    dist = p.dot(p)
+    dist = np.sqrt(p.dot(p))
     M.append(dist)
 
     return M

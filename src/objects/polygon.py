@@ -1,6 +1,7 @@
 import matplotlib
 import matplotlib.patches
 import matplotlib.pyplot as plt
+import numpy as np
 import math, random
 import pypoman
 
@@ -69,11 +70,16 @@ def generatePolygon( ctrX, ctrY, aveRadius, irregularity, spikeyness, numVerts )
         r_i = clip( random.gauss(aveRadius, spikeyness), 0, 2*aveRadius )
         x = ctrX + r_i*math.cos(angle)
         y = ctrY + r_i*math.sin(angle)
-        points.append( (int(x),int(y)) )
+        #points.append( (int(x),int(y)) )
+        #points[0].append(int(x))
+        #points[1].append(int(y))
 
+        points.append([int(x), int(y)])
+       
         angle = angle + angleSteps[i]
 
-    return points
+    return np.array(points)
+
 
 def clip(x, min, max):
     if( min > max ) :  return x
