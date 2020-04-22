@@ -1,5 +1,5 @@
 import numpy as np
-import pdb
+import pdb # TODO Remove when finished
 
 # Pydrake imports
 from pydrake.all import (Variable, SymbolicVectorSystem, DiagramBuilder,
@@ -19,6 +19,7 @@ def add_decision_variables(prog, n_x, n_u, n_po, time_steps):
     delta = prog.NewContinuousVariables(rows=time_steps + 1, cols=n_po, name='delta')
 
     return x, u, delta
+
 
 def set_initial_and_terminal_position(prog, start, goal, decision_variables):
 
@@ -49,7 +50,6 @@ def set_dynamics(prog, usv, decision_variables, time_interval, time_steps):
         residuals = usv.discrete_dynamics(x[t], x[t+1], u[t], time_interval)
         for residual in residuals:
             prog.AddConstraint(residual == 0)
-
 
 
 def set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps):
@@ -121,8 +121,6 @@ def add_cost(prog, decision_variables, time_interval, time_steps):
         prog.AddCost(time_interval*u[t].dot(u[t]))
 
 
-
-
 def get_big_M(start, goal):
     M = []
 
@@ -134,7 +132,10 @@ def get_big_M(start, goal):
     return M
 
 
-           
+
+
+
+
 # function that interpolates two given positions of the rocket
 # velocity is set to zero for all the times
 def interpolate_rocket_state(p_initial, p_final, time_interval=0.2, time_steps=100):
