@@ -6,6 +6,7 @@ from pydrake.all import (Variable, SymbolicVectorSystem, DiagramBuilder,
                          LogOutput, Simulator, ConstantVectorSource,
                          MathematicalProgram, Solve, SnoptSolver, PiecewisePolynomial,
                          OsqpSolver, eq, le, ge)
+from pydrake.solvers import branch_and_bound
 
 
 
