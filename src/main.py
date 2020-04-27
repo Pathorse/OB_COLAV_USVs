@@ -4,10 +4,7 @@ from dynamics.simple_USV import SimpleUSV
 from dynamics.hovercraft import Hovercraft
 from objects.sphere import Sphere
 from objects.polygon import Polygon, generatePolygon, plot_polygons_lines_and_points
-from path_planning.traj_opt import (interpolate_rocket_state, add_decision_variables, set_initial_and_terminal_position,
-                                    set_dynamics, set_initial_guess, set_circle_obstacles, set_polygon_obstacles,
-                                    set_safe_regions, set_binary, add_cost) #TODO remove
-from path_planning.traj_opt import run_direct_shooting_NLP
+from optimization.planner import run_NLP
 from utilities.utilities import plot_usv_contour
 
 
@@ -68,7 +65,17 @@ def main():
     usv = Hovercraft()
 
     # Calculate
-    x_opt, u_opt = run_direct_shooting_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps)
+    x_opt, u_opt = run_NLP(
+        env,
+        usv,
+        start,
+        goal,
+        lb,
+        ub,
+        time_interval,
+        time_steps
+    )
+
 
     # ----------------------------------------------------
     # Plotting
