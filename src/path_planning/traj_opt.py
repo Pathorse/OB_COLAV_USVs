@@ -16,7 +16,7 @@ def add_decision_variables(prog, n_x, n_u, n_binary, time_steps):
     u = prog.NewContinuousVariables(rows=time_steps, cols=n_u, name='u')
 
     # Binary variable
-    delta = prog.NewContinuousVariables(rows=time_steps + 1, cols=n_binary, name='delta')
+    delta = prog.NewBinaryVariables(rows=time_steps + 1, cols=n_binary, name='delta')
 
     return x, u, delta
 
@@ -147,7 +147,81 @@ def add_cost(prog, decision_variables, time_interval, time_steps):
 
     # minimize fuel consumption
     for t in range(time_steps):
-        prog.AddCost(time_interval*u[t].dot(u[t]))
+        prog.AddQuadraticCost(time_interval*u[t].dot(u[t]))
+
+
+def run_direct_shooting_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
+
+    # initialize optimization
+    prog = MathematicalProgram()
+
+
+    # optimization variables
+    decision_variables = add_decision_variables(prog, usv.n_x, usv.n_u, len(env.safe_regions), time_steps)
+
+    # intial and terminal constraint
+    set_initial_and_terminal_position(prog, start, goal, decision_variables)
+
+    # discretized dynamics
+    #set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
+
+    # circle obstacle constraints
+    #set_circle_obstacles(prog, sphere_obstacles, decision_variables, time_steps)
+
+    # polygon obstacle constraints
+    #set_polygon_obstacles(prog, env, polygon_obstacles, decision_variables, start, goal, time_steps, len(polygon_obstacles))
+    #set_binary(prog, decision_variables, time_steps)
+
+    # safe regions
+    set_safe_regions(prog, env, decision_variables, start, goal, time_steps)
+    set_binary(prog, decision_variables, time_steps)
+
+    # cost
+    add_cost(prog, decision_variables, time_interval, time_steps)
+
+    # initial guess
+    set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
+
+    # solve mathematical program
+    #solver = SnoptSolver()
+    solver = branch_and_bound.MixedIntegerBranchAndBound(prog, SnoptSolver().solver_id())
+    result = solver.Solve()
+
+    # assert the solution
+    #assert result.is_success()
+    assert result.kSolutionFound
+
+    # retrive optimal solution
+    #decision_variables_opt = [result.GetSolution(v) for v in decision_variables]
+    decision_variables_opt = [solver.GetSolution(v) for v in decision_variables]
+
+    x_opt, u_opt, delta_opt = decision_variables_opt[:3]
+
+    return x_opt, u_opt
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def get_big_M(start, goal):

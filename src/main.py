@@ -18,10 +18,13 @@ import pypoman
 
 import pdb # TODO remove
 
-# pydrake imports
+# Drake imports
 from pydrake.all import (Variable, SymbolicVectorSystem, DiagramBuilder,
                          LogOutput, Simulator, ConstantVectorSource,
-                         MathematicalProgram, Solve, SnoptSolver, PiecewisePolynomial)
+                         MathematicalProgram, Solve, SnoptSolver, OsqpSolver,
+                         PiecewisePolynomial)
+from pydrake.solvers import branch_and_bound
+
 
 
 def main():
@@ -60,8 +63,8 @@ def main():
 
     # USV
     #usv = ReVolt()
-    usv = SimpleUSV()
-    #usv = Hovercraft()
+    #usv = SimpleUSV()
+    usv = Hovercraft()
 
     # initialize optimization
     prog = MathematicalProgram()
@@ -74,7 +77,7 @@ def main():
     set_initial_and_terminal_position(prog, start, goal, decision_variables)
 
     # discretized dynamics
-    set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
+    #set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
 
     # circle obstacle constraints
     #set_circle_obstacles(prog, sphere_obstacles, decision_variables, time_steps)
@@ -94,14 +97,17 @@ def main():
     set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
 
     # solve mathematical program
-    solver = SnoptSolver()
-    result = solver.Solve(prog)
+    #solver = SnoptSolver()
+    solver = branch_and_bound.MixedIntegerBranchAndBound(prog, SnoptSolver().solver_id())
+    result = solver.Solve()
 
     # assert the solution
-    assert result.is_success()
+    #assert result.is_success()
+    assert result.kSolutionFound
 
     # retrive optimal solution
-    decision_variables_opt = [result.GetSolution(v) for v in decision_variables]
+    #decision_variables_opt = [result.GetSolution(v) for v in decision_variables]
+    decision_variables_opt = [solver.GetSolution(v) for v in decision_variables]
 
     x_opt, u_opt, delta_opt = decision_variables_opt[:3]
 
@@ -141,7 +147,6 @@ def main():
     plt.axis('equal')
     plt.show()
 
-    pdb.set_trace()
 
 
 
