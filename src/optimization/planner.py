@@ -151,7 +151,7 @@ def add_cost(prog, decision_variables, time_interval, time_steps):
         prog.AddQuadraticCost(time_interval*u[t].dot(u[t]))
 
 
-def run_direct_shooting_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
+def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
     # initialize optimization
     prog = MathematicalProgram()
