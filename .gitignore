@@ -1,3 +1,6 @@
+# Ignore copies
+/src/copies/*
+
 # Mac/OSX
 .DS_Store
 

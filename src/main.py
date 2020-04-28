@@ -5,7 +5,11 @@ from dynamics.hovercraft import Hovercraft
 from objects.sphere import Sphere
 from objects.polygon import Polygon, generatePolygon, plot_polygons_lines_and_points
 from optimization.planner import run_NLP
+from optimization.a_star import AStar
 from utilities.utilities import plot_usv_contour
+
+
+from copies.nicolas_swift_astar import astar as ns_astar
 
 
 import numpy as np
@@ -116,44 +120,87 @@ def main():
 
 
 
-def test_new_environment():
+
+
+
+
+
+
+
+
+def astar_demo():
+
     # ----------------------------------------------------
     # Setup Simulation Environment
     # ----------------------------------------------------
 
-    start = np.array([0, 0])  # Start location
-    goal  = np.array([2000, 2000]) # Goal location
+    start = [0, 0]  # Start location
+    goal  = [19, 19] # Goal location
 
-    lb = [-200, -200] # Lowerbound in x and y
-    ub = [2300, 2300] # Upperbound in x and y
+    lb = [0, 0] # Lowerbound in x and y
+    ub = [20, 20] # Upperbound in x and y
 
     polygon_vertices = [ # Consists of Polygon vertices on form [(x1,y1), (x2,y2), ...]
-        generatePolygon( ctrX=500, ctrY=1250, aveRadius=700, irregularity=0.0, spikeyness=0.0, numVerts=7),
+        generatePolygon( ctrX=10, ctrY=10, aveRadius=5, irregularity=0.0, spikeyness=0.0, numVerts=7),
         #generatePolygon( ctrX=1650, ctrY=1650, aveRadius=150, irregularity=0.0, spikeyness=0.0, numVerts=5),
         #generatePolygon( ctrX=1600, ctrY=400, aveRadius=300, irregularity=0.0, spikeyness=0.0, numVerts=5),
         #generatePolygon( ctrX=1700, ctrY=1200, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=7),
     ]
 
-    env = Environment(polygon_vertices, lb, ub) # Environment
+
+    polygon_obstacles = [] # Initiate empty obstacle list
+    for i in range(len(polygon_vertices)): # Fill obstacles with polygons
+        polygon_obstacles.append(
+            Polygon(
+                polygon_vertices[i],
+                f'Obstacle_{i}',
+                'darkorange'
+            )
+        )
+
+
+    # ----------------------------------------------------
+    # A*
+    # ----------------------------------------------------
+
+    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=1)
+
+
+    path = astar.plan()
+   
+    print('path:', path)
+
+
+
+    # ----------------------------------------------------
+    # Plotting
+    # ----------------------------------------------------
 
     plt.figure()
-    ax = plt.gca()
 
-    env.draw(ax)
+    # Plot start and goal
+    plt.plot(start[0], start[1], ".b", markersize=10)
+    plt.plot(goal[0], goal[1], "*r", markersize=10)
+
+    # Plot obstacles
+    for polygon in polygon_obstacles:
+        polygon.plot()
+
+    # Plot path
+    x_p = []
+    y_p = []
+
+    for x, y in path:
+        x_p.append(x)
+        y_p.append(y)
+
+    plt.plot(x_p, y_p)
 
     plt.axis('equal')
     plt.show()
 
 
-
-
-
-
-
-
-
-
    
 # --------------------------------------------------------------
 if __name__ == "__main__":
-    main()
+    astar_demo()
