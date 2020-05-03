@@ -1,10 +1,10 @@
-from math import atan2
+from math import atan2, sqrt
 
 import dubins
 
 
 
-def dubins_path(wpts, theta_init=0, turning_radius=1, step_size=0.2):
+def dubins_path(wpts, theta_init=0, step_size=0.2, turning_radius=1, type='default'):
 
     # Initialize dubins path
     d_path = []
@@ -23,6 +23,15 @@ def dubins_path(wpts, theta_init=0, turning_radius=1, step_size=0.2):
         # Next wpt
         n_wpt = wpts[i + 1]
 
+        if type == 'adaptive':
+            # Distance between wpts
+            dx = n_wpt[0] - c_wpt[0]
+            dy = n_wpt[1] - c_wpt[1]
+            D = sqrt(dx**2 + dy**2)
+
+            # Set adaptive turning radius
+            turning_radius = D/4
+
         # Calculate desired ending heading
         if i + 1 == N - 1: # At last wpt
             d_path.append(n_wpt)
@@ -30,6 +39,8 @@ def dubins_path(wpts, theta_init=0, turning_radius=1, step_size=0.2):
             # Next next wpt
             nn_wpt   = wpts[i + 2]
 
+            # Headings
+            theta0 = atan2(n_wpt[1] - c_wpt[1], n_wpt[0] - c_wpt[0])
             theta1 = atan2(nn_wpt[1] - n_wpt[1], nn_wpt[0] - n_wpt[0])
 
             # Dubins initial and final config
