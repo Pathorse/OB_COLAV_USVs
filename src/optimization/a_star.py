@@ -253,7 +253,7 @@ class AStar:
 
                 # Set f, g and h values
                 child_node.g = current_node.g + 1
-                child_node.h = self.heuristic(child_node, type='euclidean')
+                child_node.h = self.heuristic(child_node, type='euclidean_square')
                 child_node.f = child_node.g + child_node.h
 
                 # Skip if child already in the open list
