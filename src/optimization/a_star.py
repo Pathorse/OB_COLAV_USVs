@@ -101,6 +101,34 @@ class AStar:
         # No collision
         return False
 
+   
+    def segment_collision(self, p1, p2, stepsize=0.1):
+
+        # Extract change
+        dx = p2[0] - p1[0]
+        dy = p2[1] - p1[1]
+
+        # Num steps
+        N_steps = int(dx/stepsize)
+
+        for i in range(N_steps):
+
+            # Current x
+            x = p1[0] + i * stepsize
+
+            # Line y - y0 = dy/dx * (x - x0)
+            y = dy/dx * (x - p1[0]) + p1[1]
+
+            # Check for collision
+            col = self.collision([x, y])
+
+            if col:
+                return True
+
+        return False
+
+
+
 
     def get_graph(self):
 
@@ -287,5 +315,48 @@ class AStar:
 
             current = current.parent
 
-        # Return reversed path
-        return path[::-1]
+        # Reduce number of uneccesary points
+        path = self.reduce_path_points(path)
+       
+        return path
+
+
+    def reduce_path_points(self, path):
+
+        # Initialize reduced path
+        reduced_path = []
+       
+        # Initalize index
+        i = len(path) - 1
+
+        # Initialize wpt
+        curr_wpt = path[i]
+
+        # Add to path
+        reduced_path.append(curr_wpt)
+
+        while True:
+
+            # Set current wpt
+            curr_wpt = path[i]
+           
+            for j in range(i - 1):
+
+                # Extract next wpt
+                next_wpt = path[j]
+
+                # Check for no collision betwen points
+                if not self.segment_collision(curr_wpt, next_wpt):
+
+                    # Add to reduced path
+                    reduced_path.append(next_wpt)
+
+                    # Set index
+                    i = j
+
+                    break
+
+            if i == 0:
+                break
+
+        return reduced_path
