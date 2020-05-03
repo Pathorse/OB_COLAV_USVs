@@ -6,6 +6,7 @@ from objects.sphere import Sphere
 from objects.polygon import Polygon, generatePolygon, plot_polygons_lines_and_points
 from optimization.planner import run_NLP
 from optimization.a_star import AStar
+from optimization.dubins import dubins_path
 from utilities.utilities import plot_usv_contour
 
 
@@ -17,6 +18,7 @@ import matplotlib as mpl
 import matplotlib.patches
 import matplotlib.pyplot as plt
 import pypoman
+import dubins
 
 import pdb # TODO remove
 
@@ -123,12 +125,7 @@ def main():
 
 
 
-
-
-
-
-
-def astar_demo():
+def astar_dubins_demo():
 
     # ----------------------------------------------------
     # Setup Simulation Environment
@@ -164,13 +161,12 @@ def astar_demo():
     # A*
     # ----------------------------------------------------
 
-    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=1)
+    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=0.25)
 
 
     path = astar.plan()
-   
-    print('path:', path)
 
+    d_path = dubins_path(path, turning_radius=2)
 
 
     # ----------------------------------------------------
@@ -195,13 +191,25 @@ def astar_demo():
         x_p.append(x)
         y_p.append(y)
 
-    plt.plot(x_p, y_p)
+    plt.plot(x_p, y_p, 'r-.')
+
+    # Plot dubins path
+    x_p = []
+    y_p = []
+
+    for x, y in d_path:
+        x_p.append(x)
+        y_p.append(y)
+
+    plt.plot(x_p, y_p, 'b')
 
     plt.axis('equal')
     plt.show()
 
 
-   
+
+
+
 # --------------------------------------------------------------
 if __name__ == "__main__":
-    astar_demo()
+    astar_dubins_demo()

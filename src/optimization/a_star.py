@@ -15,8 +15,8 @@ class AStar:
             self.f      = 0.0
 
         def __eq__(self, other):
-            return self.p[0] == other.p[0] and self.p[1] == other.p[1]
-
+            #return self.p[0] == other.p[0] and self.p[1] == other.p[1]
+            return (self.p == other.p).all()
 
     def __init__(self,
                  start,
@@ -225,6 +225,7 @@ class AStar:
         graph = self.get_graph()
 
 
+        print("Entering loop")
         # Loop until you find the goal node
         while len(open_list) > 0:
 

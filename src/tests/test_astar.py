@@ -10,14 +10,15 @@ def astar_demo():
     # ----------------------------------------------------
 
     start = [0, 0]  # Start location
-    goal  = [2000, 2000] # Goal location
+    goal  = [19, 19] # Goal location
 
-    lb = [-100, -100] # Lowerbound in x and y
-    ub = [2100, 2100] # Upperbound in x and y
+    lb = [0, 0] # Lowerbound in x and y
+    ub = [20, 20] # Upperbound in x and y
 
     polygon_vertices = [ # Consists of Polygon vertices on form [(x1,y1), (x2,y2), ...]
-        generatePolygon( ctrX=500, ctrY=1250, aveRadius=700, irregularity=0.0, spikeyness=0.0, numVerts=7),
-        #generatePolygon( ctrX=1650, ctrY=1650, aveRadius=150, irregularity=0.0, spikeyness=0.0, numVerts=5),
+        generatePolygon( ctrX=10, ctrY=10, aveRadius=5, irregularity=0.0, spikeyness=0.0, numVerts=7),
+        generatePolygon( ctrX=17, ctrY=16, aveRadius=3, irregularity=0.0, spikeyness=0.0, numVerts=5),
+        generatePolygon( ctrX=10, ctrY=17.5, aveRadius=2, irregularity=0.0, spikeyness=0.0, numVerts=5),
         #generatePolygon( ctrX=1600, ctrY=400, aveRadius=300, irregularity=0.0, spikeyness=0.0, numVerts=5),
         #generatePolygon( ctrX=1700, ctrY=1200, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=7),
     ]
@@ -34,6 +35,17 @@ def astar_demo():
         )
 
 
+    # ----------------------------------------------------
+    # A*
+    # ----------------------------------------------------
+
+    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=0.25)
+
+
+    path = astar.plan()
+
+    print('path:', path)
+
 
 
     # ----------------------------------------------------
@@ -42,9 +54,23 @@ def astar_demo():
 
     plt.figure()
 
+    # Plot start and goal
+    plt.plot(start[0], start[1], ".b", markersize=10)
+    plt.plot(goal[0], goal[1], "*r", markersize=10)
+
     # Plot obstacles
     for polygon in polygon_obstacles:
         polygon.plot()
+
+    # Plot path
+    x_p = []
+    y_p = []
+
+    for x, y in path:
+        x_p.append(x)
+        y_p.append(y)
+
+    plt.plot(x_p, y_p)
 
     plt.axis('equal')
     plt.show()
