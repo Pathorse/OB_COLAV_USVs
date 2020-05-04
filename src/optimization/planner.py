@@ -13,16 +13,39 @@ from pydrake.solvers import branch_and_bound
 # ----------------------------------------------------
 # Add decision variables to the optimization problem
 # ----------------------------------------------------
-def add_decision_variables(prog, n_x, n_u, n_o, time_steps):
+def add_decision_variables(prog, env, n_x, n_u, n_o, time_steps):
 
     # Optimization variables
     x = prog.NewContinuousVariables(rows=time_steps+1, cols=n_x, name='x')
     u = prog.NewContinuousVariables(rows=time_steps, cols=n_u, name='u')
 
-    # Dual obstacle variable
-    l = prog.NewBinaryVariables(rows=time_steps + 1, cols=n_o, name='lambda')
+    # Initialize list of lambdas
+    lambdas = []
 
-    return x, u, l
+    # Extract obstacles
+    obstacles = env.obstacles
+
+    # Number of obstacles
+    N_obst = len(obstacles)
+
+    for i in range(N_obst):
+
+        # Extract polygon
+        polygon = obstacles[i]
+
+        # Extract b
+        b = polygon.b
+
+        # Number of edges in the polygon
+        n_edges = len(b)
+
+        # Create lambda variable
+        l = prog.NewBinaryVariables(rows=time_steps + 1, cols=n_edges, name=f'lambda_{i}')
+
+        # Add to list of lambdas
+        lambdas.append(l)
+
+    return x, u, lambdas
 
 
 # ----------------------------------------------------
@@ -49,6 +72,20 @@ def set_initial_and_terminal_position(prog, start, goal, decision_variables):
 
 
 # ----------------------------------------------------
+# Set an initial guess in order to perform a
+# warm-start of the optimization problem
+# ----------------------------------------------------
+def set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps):
+
+    # Unpack state and input
+    x, u = decision_variables[:2]
+
+    # initial guess
+    p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
+    prog.SetInitialGuess(x[:,:2], p_guess[:,:2])
+
+
+# ----------------------------------------------------
 # Set the USV dynamics as a constraint for the
 # optimization problem
 # ----------------------------------------------------
@@ -68,14 +105,48 @@ def set_dynamics(prog, usv, decision_variables, time_interval, time_steps):
 # Set an initial guess in order to perform a
 # warm-start of the optimization problem
 # ----------------------------------------------------
-def set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps):
+def set_obstacles(prog, env, decision_variables, time_steps):
 
     # Unpack state and input
-    x, u = decision_variables[:2]
+    x, u, lambdas = decision_variables
 
-    # initial guess
-    p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
-    prog.SetInitialGuess(x[:,:2], p_guess[:,:2])
+    # Extract obstacles
+    obstacles = env.obstacles
+
+    # Number of obstacles
+    N_obst = len(obstacles)
+
+    # Enforce constraints
+    for t in range(time_steps):
+
+        # Extract decision variable x
+        p = x[t,:2]
+       
+        for i in range(N_obst):
+
+            # Extract decision variable lambda
+            # for the current obstacle
+            l = lambdas[i][t]
+
+            # Extract polygon
+            polygon = obstacles[i]
+
+            # Extract halfspace matrices
+            A = polygon.A
+            b = polygon.b
+
+            # Residual
+            residual = (A.dot(p) - b).T.dot(l)
+           
+            # Add constraints
+            prog.AddConstraint(residual > 0)
+
+            prog.AddConstraint(
+                le( (A.T.dot(l)).dot(A.T.dot(l)), 1 )
+            )
+
+            prog.AddLinearConstraint( ge(l, 0) )
+
 
 
 # ----------------------------------------------------
@@ -105,17 +176,21 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     # intial and terminal constraint
     set_initial_and_terminal_position(prog, start, goal, decision_variables)
 
+    # initial guess
+    #set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
+
     # discretized dynamics
     set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
 
     # circle obstacle constraints
     #set_circle_obstacles(prog, sphere_obstacles, decision_variables, time_steps)
 
+    # polygon obstacle constraints
+    set_obstacles(prog, env, decision_variables, time_steps)
+
     # cost
     add_cost(prog, decision_variables, time_interval, time_steps)
 
-    # initial guess
-    set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
 
     # solve mathematical program
     solver = SnoptSolver()
