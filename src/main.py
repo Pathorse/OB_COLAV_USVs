@@ -194,12 +194,18 @@ def astar_dubins_demo():
     plt.plot(x_p, y_p, 'r-.')
 
     # Plot dubins path
-    x_p = []
-    y_p = []
+    x_p   = []
+    y_p   = []
+    psi_p = []
 
-    for x, y in d_path:
+    for x, y, psi in d_path:
         x_p.append(x)
         y_p.append(y)
+        psi_p.append(psi)
+
+    x_trj = np.array([x_p, y_p, psi_p]).T
+
+    plot_usv_contour(ax, x_trj, width=0.2, height=0.1, tip_height=0.3)
 
     plt.plot(x_p, y_p, 'b')
 
