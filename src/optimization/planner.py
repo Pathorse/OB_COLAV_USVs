@@ -10,18 +10,25 @@ from pydrake.solvers import branch_and_bound
 
 
 
-def add_decision_variables(prog, n_x, n_u, n_binary, time_steps):
+# ----------------------------------------------------
+# Add decision variables to the optimization problem
+# ----------------------------------------------------
+def add_decision_variables(prog, n_x, n_u, n_o, time_steps):
 
     # Optimization variables
     x = prog.NewContinuousVariables(rows=time_steps+1, cols=n_x, name='x')
     u = prog.NewContinuousVariables(rows=time_steps, cols=n_u, name='u')
 
-    # Binary variable
-    delta = prog.NewBinaryVariables(rows=time_steps + 1, cols=n_binary, name='delta')
+    # Dual obstacle variable
+    l = prog.NewBinaryVariables(rows=time_steps + 1, cols=n_o, name='lambda')
 
-    return x, u, delta
+    return x, u, l
 
 
+# ----------------------------------------------------
+# Set initial and final condition for the
+# optimization problem
+# ----------------------------------------------------
 def set_initial_and_terminal_position(prog, start, goal, decision_variables):
 
     # Unpack state and input
@@ -41,6 +48,10 @@ def set_initial_and_terminal_position(prog, start, goal, decision_variables):
     prog.AddLinearConstraint(eq(x[-1], x_N))
 
 
+# ----------------------------------------------------
+# Set the USV dynamics as a constraint for the
+# optimization problem
+# ----------------------------------------------------
 def set_dynamics(prog, usv, decision_variables, time_interval, time_steps):
 
     # Unpack state and input
@@ -53,6 +64,10 @@ def set_dynamics(prog, usv, decision_variables, time_interval, time_steps):
             prog.AddConstraint(residual == 0)
 
 
+# ----------------------------------------------------
+# Set an initial guess in order to perform a
+# warm-start of the optimization problem
+# ----------------------------------------------------
 def set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps):
 
     # Unpack state and input
@@ -63,6 +78,10 @@ def set_initial_guess(prog, start, goal, decision_variables, time_interval, time
     prog.SetInitialGuess(x[:,:2], p_guess[:,:2])
 
 
+# ----------------------------------------------------
+# Set circular obstacles as a constraint for the
+# optimization problem TODO remove if still unused
+# ----------------------------------------------------
 def set_circle_obstacles(prog, obstacles, decision_variables, time_steps):
 
     # Unpack state and input
@@ -76,6 +95,9 @@ def set_circle_obstacles(prog, obstacles, decision_variables, time_steps):
             prog.AddConstraint(residual >= 0)
 
 
+# ----------------------------------------------------
+# TODO remove, or modify severily..
+# ----------------------------------------------------
 def set_polygon_obstacles(prog, obstacles, decision_variables, start, goal, time_steps, n_po):
 
     # Unpack state, input and binary
@@ -101,6 +123,9 @@ def set_polygon_obstacles(prog, obstacles, decision_variables, start, goal, time
             )
 
 
+# ----------------------------------------------------
+# Setup Simulation Environment
+# ----------------------------------------------------
 def set_safe_regions(prog, env, decision_variables, start, goal, time_steps):
 
     # Unpack state, input and binary
@@ -130,6 +155,9 @@ def set_safe_regions(prog, env, decision_variables, start, goal, time_steps):
 
 
 
+# ----------------------------------------------------
+# Setup Simulation Environment
+# ----------------------------------------------------
 def set_binary(prog, decision_variables, time_steps):
 
     # Unpack state, input and binary
@@ -141,6 +169,9 @@ def set_binary(prog, decision_variables, time_steps):
         prog.AddLinearConstraint(sum_delta == 1)
 
 
+# ----------------------------------------------------
+# Add cost to the optimization problem
+# ----------------------------------------------------
 def add_cost(prog, decision_variables, time_interval, time_steps):
 
     # Unpack state and input
@@ -151,6 +182,9 @@ def add_cost(prog, decision_variables, time_interval, time_steps):
         prog.AddQuadraticCost(time_interval*u[t].dot(u[t]))
 
 
+# ----------------------------------------------------
+# Setup Simulation Environment
+# ----------------------------------------------------
 def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
     # initialize optimization
@@ -224,7 +258,7 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
 
 
-
+# TODO REMOVE BELOW -------------------------------------------------------------------
 def get_big_M(start, goal):
     M = []
 
