@@ -79,6 +79,69 @@ def set_initial_guess(prog, start, goal, decision_variables, time_interval, time
 
 
 # ----------------------------------------------------
+# Add cost to the optimization problem
+# ----------------------------------------------------
+def add_cost(prog, decision_variables, time_interval, time_steps):
+
+    # Unpack state and input
+    x, u = decision_variables[:2]
+
+    # minimize fuel consumption
+    for t in range(time_steps):
+        prog.AddQuadraticCost(time_interval*u[t].dot(u[t]))
+
+
+# ----------------------------------------------------
+# Setup Simulation Environment
+# ----------------------------------------------------
+def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
+
+    # initialize optimization
+    prog = MathematicalProgram()
+
+    # optimization variables
+    decision_variables = add_decision_variables(prog, usv.n_x, usv.n_u, len(env.safe_regions), time_steps)
+
+    # intial and terminal constraint
+    set_initial_and_terminal_position(prog, start, goal, decision_variables)
+
+    # discretized dynamics
+    set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
+
+    # circle obstacle constraints
+    #set_circle_obstacles(prog, sphere_obstacles, decision_variables, time_steps)
+
+    # cost
+    add_cost(prog, decision_variables, time_interval, time_steps)
+
+    # initial guess
+    set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
+
+    # solve mathematical program
+    solver = SnoptSolver()
+    result = solver.Solve()
+
+    # assert the solution
+    assert result.is_success()
+
+    # retrive optimal solution
+    decision_variables_opt = [result.GetSolution(v) for v in decision_variables]
+
+    x_opt, u_opt, lambda_opt = decision_variables_opt[:3]
+
+    return x_opt, u_opt
+
+
+
+
+
+
+
+
+
+
+
+# ----------------------------------------------------
 # Set circular obstacles as a constraint for the
 # optimization problem TODO remove if still unused
 # ----------------------------------------------------
@@ -117,14 +180,14 @@ def set_polygon_obstacles(prog, obstacles, decision_variables, start, goal, time
             n_sides = len(b)
 
             M_n = np.array(M * n_sides)
-            
+
             prog.AddLinearConstraint(
                 ge(polygon.A.dot(x[t,:2]), polygon.b - (1 - delta[t, n])*M_n)
             )
 
 
 # ----------------------------------------------------
-# Setup Simulation Environment
+# TODO remove
 # ----------------------------------------------------
 def set_safe_regions(prog, env, decision_variables, start, goal, time_steps):
 
@@ -156,7 +219,7 @@ def set_safe_regions(prog, env, decision_variables, start, goal, time_steps):
 
 
 # ----------------------------------------------------
-# Setup Simulation Environment
+# TODO remove
 # ----------------------------------------------------
 def set_binary(prog, decision_variables, time_steps):
 
@@ -167,78 +230,6 @@ def set_binary(prog, decision_variables, time_steps):
     for t in range(time_steps + 1):
         sum_delta = delta[t].sum()
         prog.AddLinearConstraint(sum_delta == 1)
-
-
-# ----------------------------------------------------
-# Add cost to the optimization problem
-# ----------------------------------------------------
-def add_cost(prog, decision_variables, time_interval, time_steps):
-
-    # Unpack state and input
-    x, u = decision_variables[:2]
-
-    # minimize fuel consumption
-    for t in range(time_steps):
-        prog.AddQuadraticCost(time_interval*u[t].dot(u[t]))
-
-
-# ----------------------------------------------------
-# Setup Simulation Environment
-# ----------------------------------------------------
-def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
-
-    # initialize optimization
-    prog = MathematicalProgram()
-
-
-    # optimization variables
-    decision_variables = add_decision_variables(prog, usv.n_x, usv.n_u, len(env.safe_regions), time_steps)
-
-    # intial and terminal constraint
-    set_initial_and_terminal_position(prog, start, goal, decision_variables)
-
-    # discretized dynamics
-    #set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
-
-    # circle obstacle constraints
-    #set_circle_obstacles(prog, sphere_obstacles, decision_variables, time_steps)
-
-    # polygon obstacle constraints
-    #set_polygon_obstacles(prog, env, polygon_obstacles, decision_variables, start, goal, time_steps, len(polygon_obstacles))
-    #set_binary(prog, decision_variables, time_steps)
-
-    # safe regions
-    set_safe_regions(prog, env, decision_variables, start, goal, time_steps)
-    set_binary(prog, decision_variables, time_steps)
-
-    # cost
-    add_cost(prog, decision_variables, time_interval, time_steps)
-
-    # initial guess
-    set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
-
-    # solve mathematical program
-    #solver = SnoptSolver()
-    solver = branch_and_bound.MixedIntegerBranchAndBound(prog, SnoptSolver().solver_id())
-    result = solver.Solve()
-
-    # assert the solution
-    #assert result.is_success()
-    assert result.kSolutionFound
-
-    # retrive optimal solution
-    #decision_variables_opt = [result.GetSolution(v) for v in decision_variables]
-    decision_variables_opt = [solver.GetSolution(v) for v in decision_variables]
-
-    x_opt, u_opt, delta_opt = decision_variables_opt[:3]
-
-    return x_opt, u_opt
-
-
-
-
-
-
 
 
 
