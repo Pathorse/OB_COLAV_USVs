@@ -4,13 +4,11 @@ from dynamics.simple_USV import SimpleUSV
 from dynamics.hovercraft import Hovercraft
 from objects.sphere import Sphere
 from objects.polygon import Polygon, generatePolygon, plot_polygons_lines_and_points
-from optimization.planner import run_NLP
+from optimization.planner import run_NLP, interpolate_rocket_state
 from optimization.a_star import AStar
-from optimization.dubins import dubins_path
+from optimization.dubins import dubins_path, dubins_sample_many, dubins_generate_initial_guess
 from utilities.utilities import plot_usv_contour
 
-
-from copies.nicolas_swift_astar import astar as ns_astar
 
 
 import numpy as np
@@ -27,7 +25,6 @@ from pydrake.all import (Variable, SymbolicVectorSystem, DiagramBuilder,
                          LogOutput, Simulator, ConstantVectorSource,
                          MathematicalProgram, Solve, SnoptSolver, OsqpSolver,
                          PiecewisePolynomial)
-from pydrake.solvers import branch_and_bound
 
 
 
@@ -125,92 +122,6 @@ def main():
 
 
 
-def astar_dubins_demo():
-
-    # ----------------------------------------------------
-    # Setup Simulation Environment
-    # ----------------------------------------------------
-
-    start = [0, 0]  # Start location
-    goal  = [19, 19] # Goal location
-
-    lb = [0, 0] # Lowerbound in x and y
-    ub = [20, 20] # Upperbound in x and y
-
-    polygon_vertices = [ # Consists of Polygon vertices on form [(x1,y1), (x2,y2), ...]
-        generatePolygon( ctrX=10, ctrY=10, aveRadius=5, irregularity=0.0, spikeyness=0.0, numVerts=7),
-        generatePolygon( ctrX=17, ctrY=16, aveRadius=3, irregularity=0.0, spikeyness=0.0, numVerts=5),
-        generatePolygon( ctrX=10, ctrY=17.5, aveRadius=2, irregularity=0.0, spikeyness=0.0, numVerts=5),
-        #generatePolygon( ctrX=1600, ctrY=400, aveRadius=300, irregularity=0.0, spikeyness=0.0, numVerts=5),
-        #generatePolygon( ctrX=1700, ctrY=1200, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=7),
-    ]
-
-
-    polygon_obstacles = [] # Initiate empty obstacle list
-    for i in range(len(polygon_vertices)): # Fill obstacles with polygons
-        polygon_obstacles.append(
-            Polygon(
-                polygon_vertices[i],
-                f'Obstacle_{i}',
-                'darkorange'
-            )
-        )
-
-
-    # ----------------------------------------------------
-    # A*
-    # ----------------------------------------------------
-
-    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=0.25)
-
-
-    path = astar.plan()
-
-    d_path = dubins_path(path, turning_radius=2)
-
-
-    # ----------------------------------------------------
-    # Plotting
-    # ----------------------------------------------------
-
-    plt.figure()
-
-    # Plot start and goal
-    plt.plot(start[0], start[1], ".b", markersize=10)
-    plt.plot(goal[0], goal[1], "*r", markersize=10)
-
-    # Plot obstacles
-    for polygon in polygon_obstacles:
-        polygon.plot()
-
-    # Plot path
-    x_p = []
-    y_p = []
-
-    for x, y in path:
-        x_p.append(x)
-        y_p.append(y)
-
-    plt.plot(x_p, y_p, 'r-.')
-
-    # Plot dubins path
-    x_p   = []
-    y_p   = []
-    psi_p = []
-
-    for x, y, psi in d_path:
-        x_p.append(x)
-        y_p.append(y)
-        psi_p.append(psi)
-
-    x_trj = np.array([x_p, y_p, psi_p]).T
-
-    plot_usv_contour(ax, x_trj, width=0.2, height=0.1, tip_height=0.3)
-
-    plt.plot(x_p, y_p, 'b')
-
-    plt.axis('equal')
-    plt.show()
 
 
 
@@ -218,4 +129,4 @@ def astar_dubins_demo():
 
 # --------------------------------------------------------------
 if __name__ == "__main__":
-    astar_dubins_demo()
+    main()
