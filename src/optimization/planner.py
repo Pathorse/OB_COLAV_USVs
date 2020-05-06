@@ -1,11 +1,15 @@
 import numpy as np
+
+from .a_star import AStar
+from .dubins import dubins_path, dubins_generate_initial_guess
+
 import pdb # TODO Remove when finished
 
 # Pydrake imports
 from pydrake.all import (Variable, SymbolicVectorSystem, DiagramBuilder,
                          LogOutput, Simulator, ConstantVectorSource,
                          MathematicalProgram, Solve, SnoptSolver, PiecewisePolynomial,
-                         OsqpSolver, eq, le, ge)
+                         OsqpSolver, eq, le, ge, gt, lt)
 from pydrake.solvers import branch_and_bound
 
 
@@ -13,7 +17,7 @@ from pydrake.solvers import branch_and_bound
 # ----------------------------------------------------
 # Add decision variables to the optimization problem
 # ----------------------------------------------------
-def add_decision_variables(prog, env, n_x, n_u, n_o, time_steps):
+def add_decision_variables(prog, obstacles, n_x, n_u, time_steps):
 
     # Optimization variables
     x = prog.NewContinuousVariables(rows=time_steps+1, cols=n_x, name='x')
@@ -21,9 +25,6 @@ def add_decision_variables(prog, env, n_x, n_u, n_o, time_steps):
 
     # Initialize list of lambdas
     lambdas = []
-
-    # Extract obstacles
-    obstacles = env.obstacles
 
     # Number of obstacles
     N_obst = len(obstacles)
@@ -39,13 +40,16 @@ def add_decision_variables(prog, env, n_x, n_u, n_o, time_steps):
         # Number of edges in the polygon
         n_edges = len(b)
 
-        # Create lambda variable
-        l = prog.NewBinaryVariables(rows=time_steps + 1, cols=n_edges, name=f'lambda_{i}')
+        # lambda variable for obstacle i
+        l = prog.NewContinuousVariables(rows=time_steps + 1, cols=n_edges, name=f'lambda_{i}')
 
         # Add to list of lambdas
         lambdas.append(l)
 
-    return x, u, lambdas
+    # Slack variable
+    s = prog.NewContinousVariables(rows=time_steps + 1, cols=N_obst, name='s')
+
+    return x, u, lambdas, s
 
 
 # ----------------------------------------------------
@@ -75,14 +79,32 @@ def set_initial_and_terminal_position(prog, start, goal, decision_variables):
 # Set an initial guess in order to perform a
 # warm-start of the optimization problem
 # ----------------------------------------------------
-def set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps):
+def set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps):
 
     # Unpack state and input
     x, u = decision_variables[:2]
 
-    # initial guess
-    p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
-    prog.SetInitialGuess(x[:,:2], p_guess[:,:2])
+    # Extract obstacles and bounds
+    polygon_obstacles = env.obstacles
+    lb                = env.lb
+    ub                = env.ub
+
+    # Interpolated initial guess
+    #p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
+
+    # Calculate A* plan
+    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=10)
+    path  = astar.plan()
+
+    # Calculate Dubins Segments
+    d_segments, L = dubins_path(path, turning_radius=1, type='adaptive')
+
+    # Generate initial guess in [x, y, psi]
+    x_guess = dubins_generate_initial_guess(d_segments, L, time_steps)
+
+    # Set initial guess
+    #prog.SetInitialGuess(x[:,:2], p_guess[:,:2])
+    prog.SetInitialGuess(x[:,:3], x_guess)
 
 
 # ----------------------------------------------------
@@ -105,13 +127,10 @@ def set_dynamics(prog, usv, decision_variables, time_interval, time_steps):
 # Set an initial guess in order to perform a
 # warm-start of the optimization problem
 # ----------------------------------------------------
-def set_obstacles(prog, env, decision_variables, time_steps):
+def set_polygon_obstacles(prog, obstacles, decision_variables, time_steps):
 
     # Unpack state and input
-    x, u, lambdas = decision_variables
-
-    # Extract obstacles
-    obstacles = env.obstacles
+    x, u, lambdas, s = decision_variables
 
     # Number of obstacles
     N_obst = len(obstacles)
@@ -137,15 +156,17 @@ def set_obstacles(prog, env, decision_variables, time_steps):
 
             # Residual
             residual = (A.dot(p) - b).T.dot(l)
+
+            #pdb.set_trace()
            
             # Add constraints
-            prog.AddConstraint(residual > 0)
+            prog.AddConstraint( (residual >= 0.01) )
 
             prog.AddConstraint(
-                le( (A.T.dot(l)).dot(A.T.dot(l)), 1 )
+                ( (A.T.dot(l)).dot(A.T.dot(l)) <= 1 )
             )
 
-            prog.AddLinearConstraint( ge(l, 0) )
+            prog.AddLinearConstraint( ge(l, 0.01) )
 
 
 
@@ -160,6 +181,7 @@ def add_cost(prog, decision_variables, time_interval, time_steps):
     # minimize fuel consumption
     for t in range(time_steps):
         prog.AddQuadraticCost(time_interval*u[t].dot(u[t]))
+        #prog.AddLinearCost(u[t,0] + u[t,1])
 
 
 # ----------------------------------------------------
@@ -171,13 +193,13 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     prog = MathematicalProgram()
 
     # optimization variables
-    decision_variables = add_decision_variables(prog, usv.n_x, usv.n_u, len(env.safe_regions), time_steps)
+    decision_variables = add_decision_variables(prog, env.obstacles, usv.n_x, usv.n_u, time_steps)
 
     # intial and terminal constraint
     set_initial_and_terminal_position(prog, start, goal, decision_variables)
 
     # initial guess
-    #set_initial_guess(prog, start, goal, decision_variables, time_interval, time_steps)
+    set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps)
 
     # discretized dynamics
     set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
@@ -186,7 +208,7 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     #set_circle_obstacles(prog, sphere_obstacles, decision_variables, time_steps)
 
     # polygon obstacle constraints
-    set_obstacles(prog, env, decision_variables, time_steps)
+    set_polygon_obstacles(prog, env.obstacles, decision_variables, time_steps)
 
     # cost
     add_cost(prog, decision_variables, time_interval, time_steps)
@@ -194,15 +216,14 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
     # solve mathematical program
     solver = SnoptSolver()
-    result = solver.Solve()
+    result = solver.Solve(prog)
 
     # assert the solution
     assert result.is_success()
 
     # retrive optimal solution
-    decision_variables_opt = [result.GetSolution(v) for v in decision_variables]
+    x_opt, u_opt = [result.GetSolution(v) for v in decision_variables[:2]]
 
-    x_opt, u_opt, lambda_opt = decision_variables_opt[:3]
 
     return x_opt, u_opt
 
@@ -236,7 +257,7 @@ def set_circle_obstacles(prog, obstacles, decision_variables, time_steps):
 # ----------------------------------------------------
 # TODO remove, or modify severily..
 # ----------------------------------------------------
-def set_polygon_obstacles(prog, obstacles, decision_variables, start, goal, time_steps, n_po):
+def set_polygonial_obstacles(prog, obstacles, decision_variables, start, goal, time_steps, n_po):
 
     # Unpack state, input and binary
     x, u, delta = decision_variables[:3]

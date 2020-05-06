@@ -35,19 +35,29 @@ def main():
     # ----------------------------------------------------
 
     start = np.array([0, 0])  # Start location
-    goal  = np.array([2000, 2000]) # Goal location
+    goal  = np.array([1000, 1000]) # Goal location
 
     lb = [-100, -100] # Lowerbound in x and y
-    ub = [2100, 2100] # Upperbound in x and y
+    ub = [1100, 1100] # Upperbound in x and y
 
     polygon_vertices = [ # Consists of Polygon vertices on form [(x1,y1), (x2,y2), ...]
-        generatePolygon( ctrX=500, ctrY=1250, aveRadius=700, irregularity=0.0, spikeyness=0.0, numVerts=7),
-        #generatePolygon( ctrX=1650, ctrY=1650, aveRadius=150, irregularity=0.0, spikeyness=0.0, numVerts=5),
-        #generatePolygon( ctrX=1600, ctrY=400, aveRadius=300, irregularity=0.0, spikeyness=0.0, numVerts=5),
+        #generatePolygon( ctrX=500, ctrY=1250, aveRadius=700, irregularity=0.0, spikeyness=0.0, numVerts=7),
+        generatePolygon( ctrX=700, ctrY=950, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=4),
+        generatePolygon( ctrX=500, ctrY=500, aveRadius=200, irregularity=0.0, spikeyness=0.0, numVerts=5),
         #generatePolygon( ctrX=1700, ctrY=1200, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=7),
     ]
 
-    env = Environment(polygon_vertices, lb, ub) # Environment
+    polygon_obstacles = [] # Initiate empty obstacle list
+    for i in range(len(polygon_vertices)): # Fill obstacles with polygons
+        polygon_obstacles.append(
+            Polygon(
+                polygon_vertices[i],
+                f'Obstacle_{i}',
+                'darkorange'
+            )
+        )
+
+    env = Environment(obstacles=polygon_obstacles, lb=lb, ub=ub) # Environment
 
 
     sphere_obstacles = [] # Initiate empty obstacle list
@@ -59,13 +69,13 @@ def main():
     # ----------------------------------------------------
 
     # Numeric parameters
-    time_interval = 0.4
+    time_interval = 0.2
     time_steps    = 100
 
     # USV
     #usv = ReVolt()
-    #usv = SimpleUSV()
-    usv = Hovercraft()
+    usv = SimpleUSV()
+    #usv = Hovercraft()
 
     # Calculate
     x_opt, u_opt = run_NLP(
@@ -93,8 +103,8 @@ def main():
 
     # Plot obstacles
     #plot_polygons_lines_and_points(fig, blue_polygons=obstacles)
-    #for polygon in polygon_obstacles:
-    #    polygon.plot()
+    for polygon in polygon_obstacles:
+        polygon.plot()
     #for circle in sphere_obstacles:
     #    circle.plot_contour()
 
@@ -103,7 +113,7 @@ def main():
     #plt.plot(state_guess[:,0], state_guess[:,1])
 
     # Plot environment
-    env.draw(ax)
+    #env.draw(ax)
 
     # Plot optimal trajectory
     plt.plot(x_opt[:,0], x_opt[:,1])

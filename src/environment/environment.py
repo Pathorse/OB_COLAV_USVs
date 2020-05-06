@@ -29,7 +29,7 @@ class Environment(object):
         self.ub = ub
 
         # Find convex regions
-        self.safe_regions = self.get_convex_regions()
+        #self.safe_regions = self.get_convex_regions()
 
 
     def get_convex_hull(self, start, return_debug=False, type='halfspace'):

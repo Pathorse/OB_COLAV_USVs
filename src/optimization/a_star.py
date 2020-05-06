@@ -244,6 +244,7 @@ class AStar:
 
             # Reached goal node
             if current_node == self.goal_node:
+                print("Found goal node")
                 return self.final_path(current_node)
 
             # Get motions
