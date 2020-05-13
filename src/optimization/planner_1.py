@@ -1,6 +1,9 @@
 import numpy as np
 
+from timeit import default_timer
+
 from .a_star import AStar
+from .a_star_test import AStar_test
 from .dubins import dubins_path, dubins_generate_initial_guess
 
 import pdb # TODO Remove when finished
@@ -90,7 +93,7 @@ def set_initial_guess(prog, env, start, goal, decision_variables, time_interval,
     #p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
 
     # Calculate A* plan
-    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=1)
+    astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=1)
     path  = astar.plan()
 
     # Calculate Dubins Segments
@@ -104,6 +107,29 @@ def set_initial_guess(prog, env, start, goal, decision_variables, time_interval,
     prog.SetInitialGuess(x[:,:3], x_guess)
 
     return x_guess
+
+
+# ----------------------------------------------------
+# Set state and input constraints for the
+# optimization problem
+# ----------------------------------------------------
+def set_state_and_input_constraints(prog, env, usv, decision_variables, time_interval, time_steps):
+
+    # Unpack state and input
+    x, u = decision_variables[:2]
+
+    # State bounds
+    x_lb = np.array([- np.Inf]*usv.n_x)
+    x_ub = np.array([np.Inf]*usv.n_x)
+
+    # Input bounds
+    u_lb = np.array([-np.Inf]*usv.n_u)
+    u_ub = np.array([np.Inf]*usv.n_u)
+
+    # Add Constraints
+    for t in range(1, time_steps + 1):
+        prog.AddLinearConstraint(x[t], lb=x_lb, ub=x_ub)
+        prog.AddLinearConstraint(u[t - 1], lb=u_lb, ub=u_ub)
 
 
 # ----------------------------------------------------
@@ -188,6 +214,9 @@ def add_cost(prog, decision_variables, time_interval, time_steps):
 # ----------------------------------------------------
 def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
+    # Start timer
+    NLP_start_time = default_timer()
+   
     # initialize optimization
     prog = MathematicalProgram()
 
@@ -199,6 +228,9 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
     # initial guess
     x_guess = set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps)
+
+    # state and input constraint
+    set_state_and_input_constraints(prog, env, usv, decision_variables, time_interval, time_steps)
 
     # discretized dynamics
     set_dynamics(prog, usv, decision_variables, time_interval, time_steps)
@@ -212,20 +244,36 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     # cost
     add_cost(prog, decision_variables, time_interval, time_steps)
 
-
     # solve mathematical program
+    opt_start_time = default_timer()
+
     solver = SnoptSolver()
     result = solver.Solve(prog)
+
+    opt_stop_time  = default_timer()
+
 
     # assert the solution
     #assert result.is_success()
     if result.is_success():
 
+        print("Optimization Runtime:", opt_stop_time - opt_start_time)
+
         # retrive optimal solution
         x_opt, u_opt = [result.GetSolution(v) for v in decision_variables[:2]]
 
     else:
+
+        print("No feasible solution found.")
+
+        # Return empty vectors
         x_opt, u_opt = np.zeros((time_steps, usv.n_x)), np.zeros((time_steps, usv.n_u))
+
+    # Stop timer
+    NLP_stop_time = default_timer()
+
+    # Print total runtime
+    print("NLP Runtime:", NLP_stop_time - NLP_start_time)
 
     return x_opt, u_opt, x_guess
 

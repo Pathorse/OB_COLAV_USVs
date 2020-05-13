@@ -4,12 +4,13 @@ from dynamics.simple_USV import SimpleUSV
 from dynamics.hovercraft import Hovercraft
 from objects.sphere import Sphere
 from objects.polygon import Polygon, generatePolygon, plot_polygons_lines_and_points
-from optimization.planner import run_NLP, interpolate_rocket_state
+from optimization.planner_1 import run_NLP, interpolate_rocket_state
 from optimization.a_star import AStar
 from optimization.dubins import dubins_path, dubins_sample_many, dubins_generate_initial_guess
 from utilities.utilities import plot_usv_contour
 
 
+from optimization.a_star_test import AStar_test
 
 import numpy as np
 import matplotlib as mpl
@@ -34,18 +35,26 @@ def main():
     # Setup Simulation Environment
     # ----------------------------------------------------
 
-    start = np.array([0, 0])  # Start location
-    goal  = np.array([1000, 1000]) # Goal location
+    start = np.array([10, 10])  # Start location
+    goal  = np.array([430, 50]) # Goal location
 
-    lb = [-100, -100] # Lowerbound in x and y
-    ub = [1100, 1100] # Upperbound in x and y
+    lb = [0, 0] # Lowerbound in x and y
+    ub = [450, 200] # Upperbound in x and y
 
-    polygon_vertices = [ # Consists of Polygon vertices on form [(x1,y1), (x2,y2), ...]
-        #generatePolygon( ctrX=500, ctrY=1250, aveRadius=700, irregularity=0.0, spikeyness=0.0, numVerts=7),
-        generatePolygon( ctrX=700, ctrY=950, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=4),
-        generatePolygon( ctrX=500, ctrY=500, aveRadius=200, irregularity=0.0, spikeyness=0.0, numVerts=5),
-        #generatePolygon( ctrX=1700, ctrY=1200, aveRadius=100, irregularity=0.0, spikeyness=0.0, numVerts=7),
+    # Testcase 2
+    polygon_vertices = [
+        np.array([[80,0],[80,30],[100,30],[100,0]]),
+        np.array([[80,60],[80,200],[100,200],[100,60]]),
+        np.array([[150,0],[250,90],[270,90],[170,0]]),
+        np.array([[310,100],[310,200],[340,200],[340,100]])
+        #np.array([[360,60],[310,110],[360,110],[430,60]]),
+        #np.array([[0,200],[0,250],[500,250],[500,0]]),
+        #np.array([[0,-150],[0,-100],[500,-100],[500,-150]])
     ]
+
+    #polygon_vertices = [
+    #  np.array([[40,40], [40, 60], [60,60], [60,40]])
+    #]
 
     polygon_obstacles = [] # Initiate empty obstacle list
     for i in range(len(polygon_vertices)): # Fill obstacles with polygons
@@ -69,16 +78,16 @@ def main():
     # ----------------------------------------------------
 
     # Numeric parameters
-    time_interval = 0.2
-    time_steps    = 100
+    time_interval = 2.0
+    time_steps    = 80
 
     # USV
-    #usv = ReVolt()
-    usv = SimpleUSV()
+    usv = ReVolt()
+    #usv = SimpleUSV()
     #usv = Hovercraft()
 
     # Calculate
-    x_opt, u_opt = run_NLP(
+    x_opt, u_opt, x_guess = run_NLP(
         env,
         usv,
         start,
@@ -115,13 +124,18 @@ def main():
     # Plot environment
     #env.draw(ax)
 
+    # Plot initial guess
+    plt.plot(x_guess[:,0], x_guess[:,1], '-.')
+
     # Plot optimal trajectory
     plt.plot(x_opt[:,0], x_opt[:,1])
 
     # Plot usv
     plot_usv_contour(ax, x_opt, width=20, height=10, tip_height=32)
 
-    plt.axis('equal')
+    #plt.axis('equal')
+    plt.xlim(lb[0], ub[0])
+    plt.ylim(lb[1], ub[1])
     plt.show()
 
 
@@ -132,9 +146,37 @@ def main():
 
 
 
+def test_astar():
 
+    start = np.array([0, 0])  # Start location
+    goal  = np.array([320, 90]) # Goal location
 
+    lb = [-50, -50] # Lowerbound in x and y
+    ub = [350, 120] # Upperbound in x and y
 
+    polygon_vertices = [
+        np.array([[80,-20],[80,30],[100,30],[100,-20]]),
+        np.array([[80,60],[80,120],[100,120],[100,60]]),
+        np.array([[150,10],[150,65],[170,65],[170,10]])
+    ]
+
+    #polygon_vertices = [
+    #  np.array([[40,40], [40, 60], [60,60], [60,40]])
+    #]
+
+    polygon_obstacles = [] # Initiate empty obstacle list
+    for i in range(len(polygon_vertices)): # Fill obstacles with polygons
+        polygon_obstacles.append(
+            Polygon(
+                polygon_vertices[i],
+                f'Obstacle_{i}',
+                'darkorange'
+            )
+        )
+
+    env = Environment(obstacles=polygon_obstacles, lb=lb, ub=ub) # Environment
+    astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=1)
+    path  = astar.plan()
 
 
 # --------------------------------------------------------------

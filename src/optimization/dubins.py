@@ -18,6 +18,7 @@ def dubins_path(wpts, theta_init=0, turning_radius=1, type='default'):
 
     # Initial heading
     theta0 = theta_init
+    theta1 = 0
 
     for i in range(N - 1):
 
@@ -111,7 +112,7 @@ def dubins_sample_many(segments, step_size=0.2):
     return d_path
 
 
-def dubins_sample(segments, t):
+def dubins_sample(segments, total_length, t):
 
     # Initialize total dist
     L = 0
@@ -145,6 +146,6 @@ def dubins_generate_initial_guess(segments, L, time_steps):
     dL =  L/time_steps
 
     # Sample state
-    x_guess = np.vstack([dubins_sample(segments, dL * t) for t in range(time_steps + 1)])
+    x_guess = np.vstack([dubins_sample(segments, L, dL * t) for t in range(time_steps + 1)])
 
     return x_guess

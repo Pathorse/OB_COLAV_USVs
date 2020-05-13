@@ -1,5 +1,7 @@
 import numpy as np
 
+from timeit import default_timer
+
 import pdb
 
 class AStar:
@@ -210,9 +212,12 @@ class AStar:
         return [x, y]
 
 
-    def plan(self):
+    def plan(self, epsilon=0.5):
 
-        print("Entering planning")
+        print("Entering A* path planning")
+
+        # Start timer
+        start_time = default_timer()
 
         # Initialize open and closed list
         open_list   = []
@@ -225,10 +230,18 @@ class AStar:
         graph = self.get_graph()
 
 
+        # TODO Remove
+        i = 0
+       
         print("Entering loop")
         # Loop until you find the goal node
         while len(open_list) > 0:
 
+            # TODO remove
+            i += 1
+            if (i%10 == 0):
+                print("Iteration:",i)
+           
             # Get current node
             current_node  = open_list[0]
             current_i     = 0
@@ -243,8 +256,15 @@ class AStar:
             closed_list.append(current_node)
 
             # Reached goal node
-            if current_node == self.goal_node:
+            if self.reached_goal_node(current_node):
+
                 print("Found goal node")
+
+                # Stop timer
+                stop_time = default_timer()
+
+                print("A* Runtime:", stop_time - start_time)
+
                 return self.final_path(current_node)
 
             # Get motions
@@ -288,6 +308,9 @@ class AStar:
 
                 # Skip if child already in the open list
                 for open_node in open_list:
+                    #if i == 859:
+                     #   pdb.set_trace()
+                       
                     if open_node == child_node and child_node.g > open_node.g:
                         continue
 
@@ -297,6 +320,21 @@ class AStar:
         raise Exception('Failed to find A* path')
 
 
+    def reached_goal_node(self, current_node, epsilon=0.3):
+
+        # Extract values
+        x   = current_node.p[0]
+        y   = current_node.p[1]
+        x_g = self.goal_node.p[0]
+        y_g = self.goal_node.p[1]
+
+        # Check if goal node is reached
+        cond_x = x >= x_g - epsilon and x <= x_g + epsilon
+        cond_y = y >= y_g - epsilon and y <= y_g + epsilon
+
+        return cond_x and cond_y
+
+   
     def final_path(self, current_node):
 
         # Initialize path
@@ -362,3 +400,6 @@ class AStar:
                 break
 
         return reduced_path
+
+
+
