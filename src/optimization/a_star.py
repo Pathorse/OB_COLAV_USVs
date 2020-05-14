@@ -89,7 +89,7 @@ class AStar:
 
 
     def collision(self, pos):
-
+       
         # Check for collision with all obstacles
         for obstacle in self.obstacle_list:
             A = obstacle.A
@@ -237,11 +237,6 @@ class AStar:
         # Loop until you find the goal node
         while len(open_list) > 0:
 
-            # TODO remove
-            i += 1
-            if (i%10 == 0):
-                print("Iteration:",i)
-           
             # Get current node
             current_node  = open_list[0]
             current_i     = 0

@@ -91,6 +91,36 @@ class AStar_test:
         return cond_xmin or cond_xmax or cond_ymin or cond_ymax
 
 
+   # def collision(self, pos):
+
+   #     # Tolerance
+   #     epsilon = 5
+
+   #     # Check for collision with all obstacles
+   #     for obstacle in self.obstacle_list:
+   #         A = obstacle.A
+   #         b = obstacle.b
+
+   #         # Check for collision in an
+   #         # epsilon ball around the position
+   #         angles = np.linspace(0, 2*np.pi, 5)
+
+   #         for theta in angles:
+
+   #             xp = pos[0] + epsilon * np.cos(theta)
+   #             yp = pos[1] + epsilon * np.sin(theta)
+
+   #             x = np.array([xp, yp])
+
+   #             results = np.less_equal(A.dot(x), b)
+
+   #             if results.all():
+   #                 return True
+
+   #     # No collision
+   #     return False
+
+
     def collision(self, pos):
 
         # Check for collision with all obstacles
@@ -131,8 +161,6 @@ class AStar_test:
                 return True
 
         return False
-
-
 
 
     def get_graph(self):
@@ -398,11 +426,11 @@ def search(maze, cost, start, end):
         [-1,  0], # go up
         [ 0, -1], # go left
         [ 1,  0], # go down
-        [ 0,  1] # go right
-        #[-1, -1], # go down left
-        #[ 1, -1], # go down right
-        #[-1,  1], # go up left
-        #[ 1,  1] # go up right
+        [ 0,  1], # go right
+        [-1, -1], # go down left
+        [ 1, -1], # go down right
+        [-1,  1], # go up left
+        [ 1,  1]  # go up right
     ]
 
     """

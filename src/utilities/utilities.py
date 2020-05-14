@@ -46,7 +46,3 @@ def plot_usv_contour(ax, x_trj, width=20, height=10, tip_height=30,  *args, **kw
         ax.add_patch(shape)
 
 
-
-# ----------------------------------------------------
-# Reduce the number of waypoints
-# ----------------------------------------------------

@@ -93,11 +93,13 @@ def set_initial_guess(prog, env, start, goal, decision_variables, time_interval,
     #p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
 
     # Calculate A* plan
-    astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=1)
+    #astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=1)
+    astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=4)
     path  = astar.plan()
 
     # Calculate Dubins Segments
-    d_segments, L = dubins_path(path, turning_radius=1, type='adaptive')
+    d_segments, L = dubins_path(path, type='adaptive')   # NOTE: Run this for adaptive turning rad
+    #d_segments, L = dubins_path(path, turning_radius=3) # NOTE: Run this for pre-set turning rad
 
     # Generate initial guess in [x, y, psi]
     x_guess = dubins_generate_initial_guess(d_segments, L, time_steps)
@@ -112,7 +114,8 @@ def set_initial_guess(prog, env, start, goal, decision_variables, time_interval,
 # ----------------------------------------------------
 # Set state and input constraints for the
 # optimization problem
-# ----------------------------------------------------
+# -----------------------:w
+# -----------------------------
 def set_state_and_input_constraints(prog, env, usv, decision_variables, time_interval, time_steps):
 
     # Unpack state and input
@@ -120,11 +123,17 @@ def set_state_and_input_constraints(prog, env, usv, decision_variables, time_int
 
     # State bounds
     x_lb = np.array([- np.Inf]*usv.n_x)
+    #x_lb = np.array([- np.Inf, - np.Inf, - np.Inf, - np.Inf, - np.Inf, - 10*3.14/180])
     x_ub = np.array([np.Inf]*usv.n_x)
+    #x_ub = np.array([np.Inf, np.Inf, np.Inf, np.Inf, np.Inf, 10*3.14/180])
 
     # Input bounds
     u_lb = np.array([-np.Inf]*usv.n_u)
+    #u_lb = np.array([-10**2]*usv.n_u)
+    #u_lb = np.array([-50, -32])
     u_ub = np.array([np.Inf]*usv.n_u)
+    #u_ub = np.array([10**2]*usv.n_u)
+    #u_ub = np.array([50, 32])
 
     # Add Constraints
     for t in range(1, time_steps + 1):
@@ -152,7 +161,7 @@ def set_dynamics(prog, usv, decision_variables, time_interval, time_steps):
 # Set an initial guess in order to perform a
 # warm-start of the optimization problem
 # ----------------------------------------------------
-def set_polygon_obstacles(prog, obstacles, decision_variables, time_steps):
+def set_polygon_obstacles(prog, obstacles, decision_variables, time_steps, safety_dist=3):
 
     # Unpack state and input
     x, u, lambdas = decision_variables
@@ -185,7 +194,7 @@ def set_polygon_obstacles(prog, obstacles, decision_variables, time_steps):
             #pdb.set_trace()
            
             # Add constraints
-            prog.AddConstraint( (residual >= 0.01) )
+            prog.AddConstraint( (residual >= safety_dist) )
 
             prog.AddConstraint(
                 ( (A.T.dot(l)).dot(A.T.dot(l)) <= 1 )
@@ -227,7 +236,8 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     set_initial_and_terminal_position(prog, start, goal, decision_variables)
 
     # initial guess
-    x_guess = set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps)
+    #x_guess = set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps)
+    x_guess = np.zeros((time_steps, usv.n_x))
 
     # state and input constraint
     set_state_and_input_constraints(prog, env, usv, decision_variables, time_interval, time_steps)

@@ -35,26 +35,40 @@ def main():
     # Setup Simulation Environment
     # ----------------------------------------------------
 
-    start = np.array([10, 10])  # Start location
-    goal  = np.array([430, 50]) # Goal location
 
-    lb = [0, 0] # Lowerbound in x and y
-    ub = [450, 200] # Upperbound in x and y
+    # Set testcase
+    testcase = 2
+   
+    # Testcase 1
+    if testcase == 1:
+
+        start = np.array([10, 10])  # Start location
+        goal  = np.array([180, 30]) # Goal location
+
+        lb = [-10, 0]   # Lowerbound in x and y
+        ub = [200, 100] # Upperbound in x and y
+
+        polygon_vertices = [
+            np.array([[100,0],[100,40],[120,40],[120,0]]),
+            np.array([[100,60],[100,100],[120,100],[120,60]]),
+        ]
 
     # Testcase 2
-    polygon_vertices = [
-        np.array([[80,0],[80,30],[100,30],[100,0]]),
-        np.array([[80,60],[80,200],[100,200],[100,60]]),
-        np.array([[150,0],[250,90],[270,90],[170,0]]),
-        np.array([[310,100],[310,200],[340,200],[340,100]])
-        #np.array([[360,60],[310,110],[360,110],[430,60]]),
-        #np.array([[0,200],[0,250],[500,250],[500,0]]),
-        #np.array([[0,-150],[0,-100],[500,-100],[500,-150]])
-    ]
+    elif testcase == 2:
 
-    #polygon_vertices = [
-    #  np.array([[40,40], [40, 60], [60,60], [60,40]])
-    #]
+        start = np.array([10, 10])  # Start location
+        goal  = np.array([430, 50]) # Goal location
+
+        lb = [-10, 0]   # Lowerbound in x and y
+        ub = [450, 200] # Upperbound in x and y
+   
+        polygon_vertices = [
+            np.array([[80,0],[80,40],[100,40],[100,0]]),
+            np.array([[80,60],[80,200],[100,200],[100,60]]),
+            np.array([[150,0],[250,90],[270,90],[170,0]]),
+            np.array([[310,100],[310,200],[340,200],[340,100]])
+        ]
+
 
     polygon_obstacles = [] # Initiate empty obstacle list
     for i in range(len(polygon_vertices)): # Fill obstacles with polygons
@@ -78,8 +92,8 @@ def main():
     # ----------------------------------------------------
 
     # Numeric parameters
-    time_interval = 2.0
-    time_steps    = 80
+    time_interval = 2
+    time_steps    = 50
 
     # USV
     usv = ReVolt()
@@ -103,12 +117,12 @@ def main():
     # Plotting
     # ----------------------------------------------------
    
-    plt.figure()
+    plt.figure(figsize=(8,4), dpi=100)
     ax = plt.gca()
   
     # Plot start and goal
-    plt.plot(start[0], start[1], ".b", markersize=10)
-    plt.plot(goal[0], goal[1], "*r", markersize=10)
+    plt.plot(start[0], start[1], ".b", markersize=10, label='Start')
+    plt.plot(goal[0], goal[1], "*r", markersize=10, label ='Goal')
 
     # Plot obstacles
     #plot_polygons_lines_and_points(fig, blue_polygons=obstacles)
@@ -125,17 +139,22 @@ def main():
     #env.draw(ax)
 
     # Plot initial guess
-    plt.plot(x_guess[:,0], x_guess[:,1], '-.')
+    plt.plot(x_guess[:,0], x_guess[:,1], '-.', label='A*-dubins trj')
 
     # Plot optimal trajectory
-    plt.plot(x_opt[:,0], x_opt[:,1])
+    plt.plot(x_opt[:,0], x_opt[:,1], label='Optimal trj')
 
     # Plot usv
-    plot_usv_contour(ax, x_opt, width=20, height=10, tip_height=32)
+    plot_usv_contour(ax, x_opt, width=10, height=5, tip_height=16)
 
     #plt.axis('equal')
     plt.xlim(lb[0], ub[0])
     plt.ylim(lb[1], ub[1])
+
+    plt.xlabel('East x [m]')
+    plt.ylabel('North y [m]')
+    plt.legend(ncol=2, loc='upper right', borderaxespad=0., fontsize='small')
+
     plt.show()
 
 
