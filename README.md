@@ -1,4 +1,4 @@
-# Trajectory Tracking & Control for USVs
+# Optimization Based Collision Avoidance for USVs 
 
 
 Introduction
