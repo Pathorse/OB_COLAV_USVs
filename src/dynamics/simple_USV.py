@@ -42,7 +42,7 @@ class SimpleUSV(object):
 
         # Rotation matrix about z-axis
         R = np.array([
-            [m.cos(psi), m.sin(psi), 0.0],
+            [m.cos(psi), -m.sin(psi), 0.0],
             [m.sin(psi), m.cos(psi), 0.0],
             [0.0,        0.0,        1.0]
         ])
@@ -51,6 +51,7 @@ class SimpleUSV(object):
         m1 = 120.0 * 10**(3)
         m2 = 172.9 * 10**(3)
         m3 = 636.0 * 10**(5)
+
         M = np.array([
             [m1,   0.0,    0.0],
             [0.0,  m2,     0.0],
@@ -68,12 +69,12 @@ class SimpleUSV(object):
         d1 = 215.0 * 10**(2)
         d2 = 97.0  * 10**(3)
         d3 = 802.0 * 10**(4)
+
         D = np.array([
             [d1,    0.0,    0.0],
             [0.0,   d2,     0.0],
             [0.0,   0.0,    d3 ]
         ])
-
 
         # Define Position and Orientation vector
         eta = np.array([x_n, y_n, psi])
