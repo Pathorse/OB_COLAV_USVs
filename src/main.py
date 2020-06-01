@@ -3,8 +3,8 @@ from dynamics.ReVolt import ReVolt
 from dynamics.simple_USV import SimpleUSV
 from dynamics.hovercraft import Hovercraft
 from objects.sphere import Sphere
-from objects.polygon import Polygon, generatePolygon, plot_polygons_lines_and_points
-from optimization.planner_1 import run_NLP, interpolate_rocket_state
+from objects.polygon import Polygon
+from optimization.planner_1 import run_NLP
 from optimization.a_star import AStar
 from optimization.dubins import dubins_path, dubins_sample_many, dubins_generate_initial_guess
 from utilities.utilities import plot_usv_contour
