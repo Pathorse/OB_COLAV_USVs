@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # ----------------------------------------------------
 # Plots a circle centered at the given point
-# and with the given radius
+# and with the given radius NOTE: Unused
 # ----------------------------------------------------
 def plot_circle_contour(center, radius, *args, **kwargs):
     # discretize angle
@@ -19,8 +19,6 @@ def plot_circle_contour(center, radius, *args, **kwargs):
         *args,
         **kwargs
     )
-
-
 
 
 # ----------------------------------------------------
