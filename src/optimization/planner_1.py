@@ -123,17 +123,17 @@ def set_state_and_input_constraints(prog, env, usv, decision_variables, time_int
 
     # State bounds
     x_lb = np.array([- np.Inf]*usv.n_x)
-    #x_lb = np.array([- np.Inf, - np.Inf, - np.Inf, - np.Inf, - np.Inf, - 10*3.14/180])
+    #x_lb = np.array([- np.Inf, - np.Inf, 0, - np.Inf, - np.Inf, - np.Inf])
     x_ub = np.array([np.Inf]*usv.n_x)
-    #x_ub = np.array([np.Inf, np.Inf, np.Inf, np.Inf, np.Inf, 10*3.14/180])
+    #x_ub = np.array([np.Inf, np.Inf, 2*np.pi, np.Inf, np.Inf, np.Inf])
 
     # Input bounds
     u_lb = np.array([-np.Inf]*usv.n_u)
     #u_lb = np.array([-10**2]*usv.n_u)
-    #u_lb = np.array([-50, -32])
+    #u_lb = np.array([-50, -0.02])
     u_ub = np.array([np.Inf]*usv.n_u)
     #u_ub = np.array([10**2]*usv.n_u)
-    #u_ub = np.array([50, 32])
+    #u_ub = np.array([50, 0.02])
 
     # Add Constraints
     for t in range(1, time_steps + 1):
@@ -236,8 +236,8 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     set_initial_and_terminal_position(prog, start, goal, decision_variables)
 
     # initial guess
-    #x_guess = set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps)
-    x_guess = np.zeros((time_steps, usv.n_x))
+    x_guess = set_initial_guess(prog, env, start, goal, decision_variables, time_interval, time_steps)
+    #x_guess = np.zeros((time_steps, usv.n_x))
 
     # state and input constraint
     set_state_and_input_constraints(prog, env, usv, decision_variables, time_interval, time_steps)
