@@ -42,7 +42,7 @@ class ReVolt(object):
 
         # Rotation matrix about z-axis
         R = np.array([
-            [m.cos(psi), m.sin(psi), 0],
+            [m.cos(psi), -m.sin(psi), 0],
             [m.sin(psi), m.cos(psi), 0],
             [0,          0,          1]
         ])
