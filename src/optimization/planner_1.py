@@ -404,36 +404,3 @@ def set_binary(prog, decision_variables, time_steps):
 
 
 
-
-# TODO REMOVE BELOW -------------------------------------------------------------------
-def get_big_M(start, goal):
-    M = []
-
-    p = goal - start
-
-    dist = np.sqrt(p.dot(p))
-    M.append(dist)
-
-    return M
-
-
-
-
-
-
-# function that interpolates two given positions of the rocket
-# velocity is set to zero for all the times
-def interpolate_rocket_state(p_initial, p_final, time_interval=0.2, time_steps=100):
-
-    # initial and final time and state
-    time_limits = [0., time_steps * time_interval]
-    position_limits = np.column_stack((p_initial, p_final))
-    state_limits = np.vstack((position_limits, np.zeros((2, 2))))
-
-    # linear interpolation in state
-    state = PiecewisePolynomial.FirstOrderHold(time_limits, state_limits)
-
-    # sample state on the time grid
-    state_guess = np.vstack([state.value(t * time_interval).T for t in range(time_steps + 1)])
-
-    return state_guess
