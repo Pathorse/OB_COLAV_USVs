@@ -297,20 +297,3 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
 
 
 
-# ----------------------------------------------------
-# Set circular obstacles as a constraint for the
-# optimization problem TODO remove if still unused
-# ----------------------------------------------------
-def set_circle_obstacles(prog, obstacles, decision_variables, time_steps):
-
-    # Unpack state and input
-    x, u = decision_variables[:2]
-
-    # Enforce circular constraints dist(circle)**2 >= r**2
-    for t in range(time_steps):
-        for circle in obstacles:
-            p = x[t,:2] - circle.position
-            residual = p.dot(p) - circle.radius**2
-            prog.AddConstraint(residual >= 0)
-
-
