@@ -35,15 +35,14 @@ def main():
     # Setup Simulation Environment
     # ----------------------------------------------------
 
-
     # Set testcase
-    testcase = 2
+    testcase = 1
    
     # Testcase 1
     if testcase == 1:
 
         start = np.array([10, 10])  # Start location
-        goal  = np.array([180, 30]) # Goal location
+        goal  = np.array([180, 45]) # Goal location
 
         lb = [-10, 0]   # Lowerbound in x and y
         ub = [200, 100] # Upperbound in x and y
@@ -57,7 +56,7 @@ def main():
     elif testcase == 2:
 
         start = np.array([10, 10])  # Start location
-        goal  = np.array([430, 50]) # Goal location
+        goal  = np.array([430, 95]) # Goal location
 
         lb = [-10, 0]   # Lowerbound in x and y
         ub = [450, 200] # Upperbound in x and y
@@ -82,18 +81,13 @@ def main():
 
     env = Environment(obstacles=polygon_obstacles, lb=lb, ub=ub) # Environment
 
-
-    sphere_obstacles = [] # Initiate empty obstacle list
-    sphere_obstacles.append(Sphere('Sphere_1', 'red', np.array([1000, 1000]), 300))
-    sphere_obstacles.append(Sphere('Sphere_1', 'red', np.array([1500, 1900]), 70))
-
     # ----------------------------------------------------
     # Optimization
     # ----------------------------------------------------
 
     # Numeric parameters
-    time_interval = 2
-    time_steps    = 50
+    time_interval = 1
+    time_steps    = 100
 
     # USV
     usv = ReVolt()
@@ -125,18 +119,8 @@ def main():
     plt.plot(goal[0], goal[1], "*r", markersize=10, label ='Goal')
 
     # Plot obstacles
-    #plot_polygons_lines_and_points(fig, blue_polygons=obstacles)
     for polygon in polygon_obstacles:
         polygon.plot()
-    #for circle in sphere_obstacles:
-    #    circle.plot_contour()
-
-    # Plot interpolated trajectory
-    #state_guess = interpolate_rocket_state(start, goal)
-    #plt.plot(state_guess[:,0], state_guess[:,1])
-
-    # Plot environment
-    #env.draw(ax)
 
     # Plot initial guess
     plt.plot(x_guess[:,0], x_guess[:,1], '-.', label='A*-dubins trj')
@@ -158,44 +142,6 @@ def main():
     plt.show()
 
 
-
-
-
-
-
-
-
-def test_astar():
-
-    start = np.array([0, 0])  # Start location
-    goal  = np.array([320, 90]) # Goal location
-
-    lb = [-50, -50] # Lowerbound in x and y
-    ub = [350, 120] # Upperbound in x and y
-
-    polygon_vertices = [
-        np.array([[80,-20],[80,30],[100,30],[100,-20]]),
-        np.array([[80,60],[80,120],[100,120],[100,60]]),
-        np.array([[150,10],[150,65],[170,65],[170,10]])
-    ]
-
-    #polygon_vertices = [
-    #  np.array([[40,40], [40, 60], [60,60], [60,40]])
-    #]
-
-    polygon_obstacles = [] # Initiate empty obstacle list
-    for i in range(len(polygon_vertices)): # Fill obstacles with polygons
-        polygon_obstacles.append(
-            Polygon(
-                polygon_vertices[i],
-                f'Obstacle_{i}',
-                'darkorange'
-            )
-        )
-
-    env = Environment(obstacles=polygon_obstacles, lb=lb, ub=ub) # Environment
-    astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=1)
-    path  = astar.plan()
 
 
 # --------------------------------------------------------------
