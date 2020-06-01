@@ -286,14 +286,3 @@ def run_NLP(env, usv, start, goal, lb, ub, time_interval, time_steps):
     print("NLP Runtime:", NLP_stop_time - NLP_start_time)
 
     return x_opt, u_opt, x_guess
-
-
-
-
-
-
-
-
-
-
-
