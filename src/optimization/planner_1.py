@@ -2,7 +2,8 @@ import numpy as np
 
 from timeit import default_timer
 
-from .a_star import AStar
+#from .a_star import AStar
+from .a_star_revised import AStar
 from .a_star_test import AStar_test
 from .dubins import dubins_path, dubins_generate_initial_guess
 
@@ -93,8 +94,8 @@ def set_initial_guess(prog, env, start, goal, decision_variables, time_interval,
     #p_guess = interpolate_rocket_state(start, goal, time_interval, time_steps)
 
     # Calculate A* plan
-    #astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=1)
-    astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=4)
+    astar = AStar(start, goal, polygon_obstacles, lb, ub, resolution=4)
+    #astar = AStar_test(start, goal, polygon_obstacles, lb, ub, resolution=4)
     path  = astar.plan()
 
     # Calculate Dubins Segments
