@@ -231,7 +231,7 @@ class AStar:
         start = self.istart
         goal  = self.igoal
 
-        last_node = self.search(grid, 1, start, goal)
+        last_node = self.search(grid, start, goal)
 
         path = self.final_path(last_node)
 
@@ -302,7 +302,7 @@ class AStar:
                 return current_node
 
             # Initialize children list
-            childen
+            children = []
 
             # Generate children
             for move in moves:
@@ -320,7 +320,7 @@ class AStar:
                     continue
 
                 # Create new node
-                new_node = Node(current_node, node_position, move[2])
+                new_node = self.Node(current_node, node_position, move[2])
 
                 # Add to children list
                 children.append(new_node)
@@ -329,7 +329,7 @@ class AStar:
             for child in children:
 
                 # Check if child is in the visited list
-                if len([visited_child for visited_child in visited_list if visited_child == child]) > 0:
+                if len([visited_child for visited_child in visited if visited_child == child]) > 0:
                     continue
 
                 # Create f, g, and h values
@@ -338,7 +338,7 @@ class AStar:
                 child.f = child.g + child.h
 
                 # Check if child is already in the yet to visit list and is of cheaper cost
-                if len([i for i in yet_to_visit_list if child == i and child.g > i.g]) > 0:
+                if len([i for i in yet_to_visit if child == i and child.g > i.g]) > 0:
                     continue
 
                 # Add child to yet to visit list
